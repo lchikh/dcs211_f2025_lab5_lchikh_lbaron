@@ -3,6 +3,7 @@ import pandas as pd     # Pandas is Python's "data" library ("dataframe" == spre
 import seaborn as sns   # yay for Seaborn plots!
 import matplotlib.pyplot as plt
 import random
+from tqdm import tqdm
 
 ###########################################################################
 
@@ -15,32 +16,30 @@ def cleanData(df):
     df_array=df.to_numpy()
     return df_clean , df_array
 
-def predictModel(np_training, np_features):
+import numpy as np
+
+def predictiveModel(np_training, np_features):
     dist = np.linalg.norm
     num_rows, num_cols = np_training.shape    
-    our_features = np_features[0:63]
-    closest_digit   = np_training[2]
-    closest_features = np_training[2,0:63]
+    our_features = np_features[0:64]
+
+    closest_features = np_training[0, 0:64]
+    closest_digit    = np_training[0, 64]
     closest_distance = dist(our_features - closest_features)
     
-    for i in range(2, num_rows, 1):
-        current_digit   = np_training[i]
-        current_features = np_training[i,0:63]
+
+    for i in range(1, num_rows):
+        current_features = np_training[i, 0:64]
+        current_digit    = np_training[i, 64]
         current_distance = dist(our_features - current_features)
 
         if current_distance < closest_distance:
             closest_distance = current_distance  
-            closest_digit   = current_digit
+            closest_digit    = current_digit
 
-    predicted_digit = closest_digit   
-    actual_digit = np_training[64]
+    predicted_digit = closest_digit
 
-    return f" our prediction of {actual_digit} is ({predicted_digit})"
-
-
-
-
-
+    return int(predicted_digit)
 
 
 def drawDigitHeatmap(pixels: np.ndarray, showNumbers: bool = True) -> None:
@@ -93,33 +92,71 @@ def main() -> None:
     print(df.head())
     print(f"{filename} : file read into a pandas dataframe...")
     df , df_array = cleanData(df)
-    features = [0, 0, 10, 7, 13, 9, 0, 0,
-                0, 0, 9, 10, 12, 15, 2, 0,
-                0, 0, 4, 11, 10, 11, 0, 0,
-                0, 0, 1, 16, 10, 1, 0, 0,
-                0, 0, 12, 13, 4, 0, 0, 0,
-                0, 0, 12, 1, 12, 0, 0, 0,
-                0, 1, 10, 2, 14, 0, 0, 0,
-                0, 0, 11, 14, 5, 0, 0, 0]
-    result = predictModel( df_array , features )
+    features = [0, 0, 9, 16, 16, 16, 5, 0, 0, 1, 14, 10, 8, 16, 8, 0,
+ 0, 0, 0, 0, 7, 16, 3, 0, 0, 3, 8, 11, 15, 16, 11, 0,
+ 0, 8, 16, 16, 15, 11, 3, 0, 0, 0, 2, 16, 7, 0, 0, 0,
+ 0, 0, 8, 16, 1, 0, 0, 0, 0, 0, 13, 10, 0, 0, 0, 0]
+#should give back 7
+    result = predictiveModel( df_array , np.array(features) )
     print(f"I predict {result} from features {features}")
+#defining the features and labels 
+    X_all = df_array[:,0:64]  
+    y_all = df_array[:,64]  
+    print(f"X_all (just features) is \n {X_all}")
+    print(f"y_all (just labels)   is \n {y_all}") 
+    num_rows = X_all.shape[0]
+    print(num_rows)
+    test_percent = 0.20
+    test_percent = 0.80
+    test_size = int(test_percent * num_rows)  
+# this first part is when the top 80% is the training set and bottom 20 is testing set
+#accuracy = 96.88%
+    X_test = X_all[:test_size]    
+    y_test = y_all[:test_size]
 
+    X_train = X_all[test_size:]   
+    y_train = y_all[test_size:]
 
-   # num_to_draw = 5
-   # for i in range(num_to_draw):
-        # let's grab one row of the df at random, extract/shape the digit to be
-        # 8x8, and then draw a heatmap of that digit
-      #  random_row = random.randint(0, len(df) - 1)
-       # (digit, pixels) = fetchDigit(df, random_row)
+# this second part is when the top 20% is the testing set and bottom 20 is training set (just overwriting the values)
+#accuracy 91.37%
+    X_train = X_all[:num_rows - test_size]
+    y_train = y_all[:num_rows - test_size]
 
-       # print(f"The digit is {digit}")
-       # print(f"The pixels are\n{pixels}")  
-        #drawDigitHeatmap(pixels)
-       # plt.show()
+    X_test = X_all[num_rows - test_size:]
+    y_test = y_all[num_rows - test_size:]
 
-    #
-    # OK!  Onward to knn for digits! (based on your iris work...)
-    #
+    num_train_rows = len(y_train)
+    num_test_rows  = len(y_test)
+    print(f"total rows: {num_rows};  training with {num_train_rows} rows;  testing with {num_test_rows} rows" )
+    print(f"\t(sanity check:  {num_train_rows} + {num_test_rows} = {num_train_rows + num_test_rows})")
+    
+    # Loop through each row in the test set
+    predictions=[]
+    actuals=[]
+    np_training = np.hstack((X_train, y_train.reshape(-1, 1)))
+    np_testing  = np.hstack((X_test,  y_test.reshape(-1, 1)))
+    for i in tqdm(range(len(np_testing)), desc="Predicting digits"): #this is for the progress bar
+        test_row = np_testing[i]
+        predicted_digit = predictiveModel(np_training, test_row)
+        predictions.append(predicted_digit)
+        actuals.append(int(test_row[64]))
+
+    accuracy = np.mean(np.array(predictions) == np.array(actuals))
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+
+    num_to_draw = 5
+    for i in range(num_to_draw):
+        #let's grab one row of the df at random, extract/shape the digit to be
+         #8x8, and then draw a heatmap of that digit
+        random_row = random.randint(0, len(df) - 1)
+        (digit, pixels) = fetchDigit(df, random_row)
+
+        print(f"The digit is {digit}")
+        print(f"The pixels are\n{pixels}")  
+        drawDigitHeatmap(pixels)
+        plt.show()
+    #yes it makes sense, the firt 5 are very unclear what number they are
+   
 
 ###############################################################################
 # wrap the call to main inside this if so that _this_ file can be imported
