@@ -156,6 +156,15 @@ def main() -> None:
         drawDigitHeatmap(pixels)
         plt.show()
     #yes it makes sense, the firt 5 are very unclear what number they are
+
+    # how the data was collected: 
+    #link: https://ocw.mit.edu/courses/15-097-prediction-machine-learning-and-statistics-spring-2012/d1cfd95258db2d252fd921b39805907d_digits_info.txt
+    # the sample was was collected from 250 samples by 44 writers
+    #WACOM PL-100V pressure sensitive tablet was used with an integrated LCD display and a cordless stylus
+    #The tablet sends $x$ and $y$ tablet coordinates and pressure level values of the pen at fixed time intervals (sampling rate) of 100 miliseconds
+    #some potential issues: since there is only small amount of writers, the data might not represent the variability of writing styles
+    #the small writer-independent test set may not adequately evaluate generalization.
+    #The model may not generalize well to other hardware setups
    
 
 ###############################################################################
