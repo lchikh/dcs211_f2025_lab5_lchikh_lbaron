@@ -6,22 +6,44 @@ import random
 from tqdm import tqdm
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
-
+#from typing import Tuple
 
 ###########################################################################
 
-
-def cleanData(df):
-    " Function that takes in a "
+#def cleanTheData(df: pd.DataFrame) ->  Tuple[np.ndarray,pd.DataFrame:
+def cleanTheData(df: pd.DataFrame) ->  np.ndarray:
+    """ Function that takes in a data frame and
+    retunrs a clean numpy array 
+    
+    parameters: 
+            panda data frame
+            
+    returns: 
+            cleaned numpy array of the df"""
+     
     last_column=df.columns[-1]
     print(last_column)
     df_clean=df.drop(columns=[last_column])
-    df_array=df.to_numpy()
+    df_clean=df_clean.dropna()
+    df_array=df_clean.to_numpy(dtype=int)
     return df_clean , df_array
 
 import numpy as np
 
-def predictiveModel(np_training, np_features):
+def predictiveModel(np_training:np.ndarray, np_features:np.ndarray) -> int:
+    """
+    function that accepts a numpy array
+    accepting a training set numpy array
+    and the features numpy array 
+    and return the predicted label 
+    
+        parameters: 
+                    np_training: numpy array of training set
+                    np_features: numpy array of 
+                    
+        returns: 
+                    the predicted digit based on the training set and the array of features provided     
+                    """
     dist = np.linalg.norm
     num_rows, num_cols = np_training.shape    
     our_features = np_features[0:64]
@@ -88,7 +110,7 @@ def fetchDigit(df: pd.core.frame.DataFrame, which_row: int) -> tuple[int, np.nda
     return (digit, pixels)              # return a tuple
 
 ############################################################################
-def splitData(data: np.ndarray, test_percent: float = 0.2) -> list[np.ndarray]:
+def splitData(data: np.ndarray, test_percent: float = 0.2) -> list[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
     """
     Split data into training and testing sets.
     
@@ -99,12 +121,17 @@ def splitData(data: np.ndarray, test_percent: float = 0.2) -> list[np.ndarray]:
     Returns:
         list containing [X_test, y_test, X_train, y_train]
     """
+    data = data.astype(float)
+    np.random.shuffle(data)
+
+    num_rows = data.shape[0]
+    test_size = max(1, int(test_percent * num_rows))
     num_rows = data.shape[0]
     test_size = int(test_percent * num_rows)
 
     # Split features (X) and labels (y)
-    X_all = data[:, 0:64]
-    y_all = data[:, 64]
+    X_all = data[:, :-1]
+    y_all = data[:, -1]
 
    # Split into training and testing sets
     X_test = X_all[:test_size]
@@ -184,7 +211,7 @@ def findBestK(X_train: np.ndarray, y_train: np.ndarray, random_seed: int = 86753
     return best_k
 
 
-def trainAndTest(X_train, y_train, X_test, best_k):
+def trainAndTest(X_train:np.ndarray, y_train:np.ndarray, X_test:np.ndarray, best_k:int) ->np.ndarray:
 
     """function will train and test the model using best k
     input :
@@ -212,7 +239,7 @@ def main() -> None:
     df = pd.read_csv(filename, header = 0)
     print(df.head())
     print(f"{filename} : file read into a pandas dataframe...")
-    df , df_array = cleanData(df)
+    df , df_array = cleanTheData(df)
     features = [0, 0, 9, 16, 16, 16, 5, 0, 0, 1, 14, 10, 8, 16, 8, 0,
  0, 0, 0, 0, 7, 16, 3, 0, 0, 3, 8, 11, 15, 16, 11, 0,
  0, 8, 16, 16, 15, 11, 3, 0, 0, 0, 2, 16, 7, 0, 0, 0,
@@ -344,7 +371,6 @@ def main() -> None:
 # and used as a library, if necessary, without executing its main
 if __name__ == "__main__":
     main()
-
 
 
 
