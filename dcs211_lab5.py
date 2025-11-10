@@ -184,6 +184,25 @@ def findBestK(X_train: np.ndarray, y_train: np.ndarray, random_seed: int = 86753
     return best_k
 
 
+def trainAndTest(X_train, y_train, X_test, best_k):
+
+    """function will train and test the model using best k
+    input :
+        x_train : training features"
+        y_train : training labels"
+        best_k : k with the highest accuracy 
+    returns:
+        predicted labels: labels of digits predicted by the model 
+
+    """
+
+    knn_model_tuned = KNeighborsClassifier(n_neighbors = best_k) 
+    knn_model_tuned.fit(X_train, y_train)  
+    predicted_labels = knn_model_tuned.predict(X_test)
+
+    return predicted_labels 
+  
+
 
 
 ###########################################################################
@@ -315,6 +334,10 @@ def main() -> None:
     #the small writer-independent test set may not adequately evaluate generalization.
     #The model may not generalize well to other hardware setups
    
+    predicted_values= trainAndTest(X_train,y_train,X_test, findBestK(X_train,y_train) )
+    print(predicted_values)
+    actual_labels=y_test
+    compareLabels(predicted_labels,actual_labels)
 
 ###############################################################################
 # wrap the call to main inside this if so that _this_ file can be imported
